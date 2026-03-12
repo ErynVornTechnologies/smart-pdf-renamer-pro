@@ -1,0 +1,6 @@
+google-generativeai
+pdfplumber
+customtkinter
+Pillow
+requests
+python-dotenv
