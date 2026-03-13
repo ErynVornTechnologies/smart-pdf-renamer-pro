@@ -1,69 +1,70 @@
 # 📄 Smart PDF Renamer Pro (AI-Powered)
 
-Automate the boring task of renaming messy PDF invoices and documents. This tool uses **Google Gemini AI** to analyze document content and suggest standardized, logical filenames.
-
-![App Screenshot](https://aiblackbox.co.uk/wp-content/uploads/2025/08/AIBLACKBOX-logonowe_.png)
+Automate the boring task of renaming messy PDF invoices and documents. This tool uses AI to analyze document content and suggest standardized, logical filenames.
 
 ## 🌟 Features
 
 - **AI Content Analysis**: Reads the first page of your PDF to understand what the document is.
 - **Smart Naming**: Automatically formats names to `YYYY-MM-DD_Company_Invoice.pdf`.
+- **Multi-Provider LLM**: Choose from Gemini, OpenAI, Anthropic, LM Studio, or OpenRouter.
 - **Modern GUI**: Built with `customtkinter` for a sleek, professional dark-mode experience.
 - **Bulk Processing**: Process hundreds of files with one click.
 - **Safety First**: Uses a source and destination folder to keep your original files untouched.
+- **AI Agent Friendly**: Optimised for autonomous agents (Gemini, Claude, AntiGravity) to set up and run.
 
-## 🛠️ Requirements
+## 🛠️ Prerequisites
 
-- Windows 10/11
-- Python 3.10 or higher
-- Google Gemini API Key
+- Python 3.10+
+- An API key for at least one LLM provider (see below)
 
 ## 🚀 Installation & Setup
 
 1. **Clone the repository:**
 
    ```bash
-   git clone https://github.com/your-username/smart-pdf-renamer.git
-   cd smart-pdf-renamer
+   git clone https://github.com/HappyBirdProduction/smart-pdf-renamer-pro.git
+   cd smart-pdf-renamer-pro
    ```
 
-2. **Create a virtual environment:**
-
-   ```bash
-   python -m venv .venv
-   .venv\Scripts\activate
-   ```
-
-3. **Install dependencies:**
+2. **Install dependencies:**
 
    ```bash
    pip install -r requirements.txt
    ```
 
-4. **Configure your API Key:**
-   - Create a file named `.env` in the root folder.
-   - Add your Gemini API key:
+3. **Configure your API Key:**
+   - Copy `.env.example` to `.env`
+   - Set your preferred `LLM_PROVIDER` and the corresponding API key:
 
-     ```env
-     GOOGLE_API_KEY=your_actual_api_key_here
-     ```
+   ```env
+   LLM_PROVIDER=gemini
+   GOOGLE_API_KEY=your-api-key-here
+   ```
+
+### Supported LLM Providers
+
+| Provider | Env Variable | Default Model |
+| --- | --- | --- |
+| Google Gemini | `GOOGLE_API_KEY` | `gemini-2.5-flash` |
+| OpenAI | `OPENAI_API_KEY` | `gpt-4o-mini` |
+| Anthropic | `ANTHROPIC_API_KEY` | `claude-sonnet-4-20250514` |
+| LM Studio (local) | `LMSTUDIO_URL` | `local-model` |
+| OpenRouter | `OPENROUTER_API_KEY` | `gemini-2.0-flash-exp:free` |
 
 ## 🎮 How to Use
 
-1. **Run the application:**
+1. Run `python renamer.py`
+2. **Select Source Folder** — the folder with messy PDF files.
+3. **Select Destination** — where renamed files should be saved.
+4. **Click START RENAMING** — watch the AI process your documents in real-time.
 
-   ```bash
-   python renamer.py
-   ```
+## Troubleshooting
 
-2. **Select Source Folder**: Pick the folder containing your messy PDF files.
-3. **Select Destination**: Pick where the renamed files should be saved.
-4. **Click START RENAMING**: Watch the AI process your documents in real-time.
-
-## 📝 Disclaimer
-
-This tool uses AI to analyze document content. While highly accurate, always verify important documents. Created for educational and productivity purposes.
+| Problem | Solution |
+| --- | --- |
+| `ModuleNotFoundError` | Run `pip install -r requirements.txt` |
+| API Key error | Check your `.env` file and make sure the correct key is set |
+| PDF not recognized | Ensure the PDF contains selectable text (not a scanned image) |
 
 ---
-Brought to you by **[AiBlackBox](https://aiblackbox.co.uk/)**.  
-Follow us on **[LinkedIn](https://www.linkedin.com/in/kamil-krzysztof-nagorski/)** for more AI toolkits and autonomous engineering insights.
+*Brought to you by [aiBlackBox](https://aiblackbox.co.uk/). Follow us on [LinkedIn](https://www.linkedin.com/in/kamil-krzysztof-nagorski/) for more AI toolkits.*

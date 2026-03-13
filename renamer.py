@@ -9,14 +9,74 @@ from PIL import Image
 from tkinter import filedialog, messagebox
 import webbrowser
 
-# Load API Key from .env for security in production
+# Load environment variables
 load_dotenv()
-GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY", "YOUR_API_KEY_HERE")
-LLM_MODEL = "gemini-3-flash-preview"
+
+# ===== LLM PROVIDER CONFIGURATION =====
+# Set LLM_PROVIDER in your .env file or change here directly.
+# Supported: "gemini", "openai", "anthropic", "lmstudio", "openrouter"
+PROVIDER = os.getenv("LLM_PROVIDER", "gemini")
+
+# API Keys — set these in your .env file
+GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY", "")
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "")
+ANTHROPIC_API_KEY = os.getenv("ANTHROPIC_API_KEY", "")
+LMSTUDIO_URL = os.getenv("LMSTUDIO_URL", "http://localhost:1234/v1")
+OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY", "")
+
+# Model names per provider — customize as needed
+MODELS = {
+    "gemini": os.getenv("GEMINI_MODEL", "gemini-2.5-flash"),
+    "openai": os.getenv("OPENAI_MODEL", "gpt-4o-mini"),
+    "anthropic": os.getenv("ANTHROPIC_MODEL", "claude-sonnet-4-20250514"),
+    "lmstudio": os.getenv("LMSTUDIO_MODEL", "local-model"),
+    "openrouter": os.getenv("OPENROUTER_MODEL", "google/gemini-2.0-flash-exp:free"),
+}
+
 LOGO_URL = "https://aiblackbox.co.uk/wp-content/uploads/2025/08/AIBLACKBOX-logonowe_.png"
 
 # Appearance Configuration
 ctk.set_appearance_mode("Dark")
+
+
+def call_llm(prompt):
+    """Route prompt to the configured LLM provider. Returns response text."""
+    model_name = MODELS.get(PROVIDER, "")
+
+    if PROVIDER == "gemini":
+        import google.generativeai as genai
+        genai.configure(api_key=GOOGLE_API_KEY)
+        model = genai.GenerativeModel(model_name)
+        response = model.generate_content(prompt)
+        return response.text.strip()
+
+    elif PROVIDER in ("openai", "lmstudio", "openrouter"):
+        from openai import OpenAI
+        if PROVIDER == "openai":
+            client = OpenAI(api_key=OPENAI_API_KEY)
+        elif PROVIDER == "lmstudio":
+            client = OpenAI(base_url=LMSTUDIO_URL, api_key="lm-studio")
+        else:
+            client = OpenAI(base_url="https://openrouter.ai/api/v1", api_key=OPENROUTER_API_KEY)
+        response = client.chat.completions.create(
+            model=model_name,
+            messages=[{"role": "user", "content": prompt}]
+        )
+        return response.choices[0].message.content.strip()
+
+    elif PROVIDER == "anthropic":
+        import anthropic
+        client = anthropic.Anthropic(api_key=ANTHROPIC_API_KEY)
+        response = client.messages.create(
+            model=model_name,
+            max_tokens=1024,
+            messages=[{"role": "user", "content": prompt}]
+        )
+        return response.content[0].text.strip()
+
+    else:
+        raise ValueError(f"Unknown LLM provider: {PROVIDER}. Use: gemini, openai, anthropic, lmstudio, openrouter")
+
 
 class PDFRenamerApp(ctk.CTk):
     def __init__(self):
@@ -59,7 +119,7 @@ class PDFRenamerApp(ctk.CTk):
         # --- Header Title ---
         self.lbl_header = ctk.CTkLabel(
             self, 
-            text="AI-Powered Bulk PDF Invoices Renamig Tool", 
+            text="AI-Powered Bulk PDF Invoices Renaming Tool", 
             font=("Montserrat", 26),
             text_color=self.text_color
         )
@@ -80,14 +140,14 @@ class PDFRenamerApp(ctk.CTk):
             command=self.select_input, 
             width=220, 
             height=38,
-            font=("Enkode sans semiCondensed", 18),
+            font=("Roboto", 18),
             fg_color=self.accent_color, 
             hover_color="#298cb5",
             corner_radius=8
         )
         self.btn_input.pack(side="left")
         
-        self.lbl_input = ctk.CTkLabel(self.source_frame, text="No source selected", font=("Enkode sans semiCondensed", 18), text_color=self.gray_text)
+        self.lbl_input = ctk.CTkLabel(self.source_frame, text="No source selected", font=("Roboto", 18), text_color=self.gray_text)
         self.lbl_input.pack(side="right", padx=10)
 
         # Destination Folder Row
@@ -100,14 +160,14 @@ class PDFRenamerApp(ctk.CTk):
             command=self.select_output, 
             width=220, 
             height=38,
-            font=("Enkode sans semiCondensed", 18),
+            font=("Roboto", 18),
             fg_color=self.accent_color, 
             hover_color="#298cb5",
             corner_radius=8
         )
         self.btn_output.pack(side="left")
         
-        self.lbl_output = ctk.CTkLabel(self.dest_frame, text="No destination selected", font=("Enkode sans semiCondensed", 18), text_color=self.gray_text)
+        self.lbl_output = ctk.CTkLabel(self.dest_frame, text="No destination selected", font=("Roboto", 18), text_color=self.gray_text)
         self.lbl_output.pack(side="right", padx=10)
 
         # --- Progress ---
@@ -196,7 +256,7 @@ class PDFRenamerApp(ctk.CTk):
             self.lbl_output.configure(text=f"...{folder[-30:]}" if len(folder) > 30 else folder)
 
     def start_process_thread(self):
-        if not GOOGLE_API_KEY or GOOGLE_API_KEY == "YOUR_API_KEY_HERE":
+        if not GOOGLE_API_KEY and PROVIDER == "gemini":
             messagebox.showerror("Error", "API Key not found! Please provide it in .env file.")
             return
         if not self.input_path or not self.output_path:
@@ -210,20 +270,14 @@ class PDFRenamerApp(ctk.CTk):
     def get_ai_name(self, text):
         if not text: return None
         try:
-            import google.generativeai as genai
-            genai.configure(api_key=GOOGLE_API_KEY)
-            model = genai.GenerativeModel(LLM_MODEL)
-            
             prompt = (
                 "Analyze the following text from an invoice document and suggest a standardized filename in the format: "
                 "YYYY-MM-DD_Company_Invoice.pdf. Return ONLY the filename, nothing else.\n\n"
                 f"Text extract:\n{text[:2000]}"
             )
-            
-            response = model.generate_content(prompt)
-            return response.text.strip()
+            return call_llm(prompt)
         except Exception as e:
-            self.log(f"Gemini API Error: {str(e)}")
+            self.log(f"LLM Error ({PROVIDER}): {str(e)}")
             return None
 
     def extract_text(self, pdf_path):
